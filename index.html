@@ -1,1 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h2, h3 {
+            text-align: center;
+        }
+
+        #adminControls, #userControls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="text" id="userid" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+
+        <div id="adminControls" class="hidden">
+            <h3>Admin Controls</h3>
+            <button onclick="toggleCreateUser()">Create User</button>
+            <div id="createUserForm" class="hidden">
+                <input type="text" id="newUsername" placeholder="New Username" required>
+                <input type="password" id="newPassword" placeholder="New Password" required>
+                <button onclick="createUser()">Create User</button>
+            </div>
+        </div>
+
+        <div id="userControls" class="hidden">
+            <h3>User Controls</h3>
+            <button onclick="toggleChangePassword()">Change Password</button>
+            <div id="changePasswordForm" class="hidden">
+                <input type="password" id="newPasswordUser" placeholder="New Password" required>
+                <button onclick="changeUserPassword()">Change Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = "https://workerd1.amigoddess3.workers.dev";
+
+        document.getElementById("loginForm").addEventListener("submit", login);
+        let loggedInUser = null;
+
+        async function login(event) {
+            event.preventDefault();
+
+            const userid = document.getElementById("userid").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch(`${apiUrl}/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ userid, password }),
+                });
+
+                const data = await response.json();
+                console.log(data); // Log the response for debugging
+
+                if (response.ok) {
+                    loggedInUser = data;
+                    alert("Login successful!");
+
+                    if (data.username === "admin") {
+                        console.log("Admin logged in");
+                        document.getElementById("adminControls").classList.remove("hidden");
+                    } else {
+                        console.log("Regular user logged in");
+                        document.getElementById("userControls").classList.remove("hidden");
+                    }
+                } else {
+                    alert("Invalid credentials!");
+                }
+            } catch (error) {
+                console.error("Error during login:", error);
+                alert("Something went wrong during login.");
+            }
+        }
+
+        function toggleCreateUser() {
+            const createUserForm = document.getElementById("createUserForm");
+            createUserForm.classList.toggle("hidden");
+        }
+
+        async function createUser() {
+            const newUsername = document.getElementById("newUsername").value;
+            const newPassword = document.getElementById("newPassword").value;
+
+            try {
+                const response = await fetch(`${apiUrl}/create-user`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ userid: newUsername, username: newUsername, password: newPassword }),
+                });
+
+                if (response.ok) {
+                    alert("User created successfully!");
+                } else {
+                    alert("Error creating user.");
+                }
+            } catch (error) {
+                console.error("Error creating user:", error);
+                alert("Something went wrong.");
+            }
+        }
+
+        function toggleChangePassword() {
+            const changePasswordForm = document.getElementById("changePasswordForm");
+            changePasswordForm.classList.toggle("hidden");
+        }
+
+        async function changeUserPassword() {
+            const newPassword = document.getElementById("newPasswordUser").value;
+
+            try {
+                const response = await fetch(`${apiUrl}/change-password`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        userid: loggedInUser.userid,
+                        old_password: loggedInUser.password,  // Assuming you have the current password stored after login
+                        new_password: newPassword,
+                    }),
+                });
+
+                if (response.ok) {
+                    alert("Password changed successfully!");
+                } else {
+                    alert("Error changing password.");
+                }
+            } catch (error) {
+                console.error("Error changing password:", error);
+                alert("Something went wrong.");
+            }
+        }
+    </script>
+</body>
+</html>
